@@ -1,0 +1,15 @@
+# Useful material
+
+Million Song Dataset: genre classification competition at the School of Informatics, University of Edinburgh
+    https://www.kaggle.com/c/mlp2016-7-msd-genre
+
+Million Song Dataset with extracted features
+    https://labrosa.ee.columbia.edu/millionsong/
+
+Spotify developer: get audio features for several tracks
+    https://developer.spotify.com/web-api/console/get-audio-features-several-tracks/?ids=4JpKVNYnVcJ8tuMKjAj50A,2NRANZE9UCmPAS5XVbXL40,24JygzOLM0EmRQeGtFcIcG#complete
+
+
+PyAudioAnalysis: A Python library for audio feature extraction, classification, segmentation and applications
+    https://github.com/tyiannak/pyAudioAnalysis
+    https://github.com/tyiannak/pyAudioAnalysis/wiki
