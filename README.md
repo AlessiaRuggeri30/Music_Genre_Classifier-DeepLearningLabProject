@@ -1,18 +1,21 @@
-# Music_Genre_Classificator-DeepLearningLabProject
+# Music Genre Classificator - Deep Learning Lab Project
 
 WORK IN PROGRESS
 
-Deep Learning Lab project: Music Genre Classificator using audio features and neural networks
+Group members: Alessia Ruggeri, Thomas Tiotto
 
-The aim is to create a neural network able to classify one or more songs by music genre, using some audio features extracted from the songs.
-To do this, the song that has to be analized needs to get throught two main modules: the first one wants to extract the audio features needed for the genre classification from the file audio; the second one wants to use these features to classify the song with a neural network and to return the corresponding music genre as output.
+Abstract: Music Genre Classificator using audio features and neural networks.
 
-Before having a working neural network model, we need a dataset go throught the training, the validation and the testing of the model. To train the model, it would be better to use a dataset of already extracted features and labelled songs by music genre.
+Introduction: The aim of the project is to create a neural network that is able to classify songs by music genre, using audio features extracted from them.
+
+To do this, the song that has to be analysed needs to be fed through two main modules: the first one extracts the audio features needed for the genre classification from the file; the second uses these features to classify the song with a neural network and to return the corresponding music genre as its output.
+
+Before having a working neural network model, we need a dataset go through the training, the validation and the testing of the model. To train the model, it would be better to use a dataset of already extracted features and labeled songs by music genre.
 
 This type of dataset is provided by the Million Song Dataset:
-  https://labrosa.ee.columbia.edu/millionsong/
+    https://labrosa.ee.columbia.edu/millionsong/
 
-To have a little help for the features extraction, we could use some python library to manage and analyze the files audio.
+To have a little help for the features extraction, we could use some python library to manage and analyse the audio files.
 
 PyAudioAnalysis could be a suitable library:
-  https://github.com/tyiannak/pyAudioAnalysis
+    https://github.com/tyiannak/pyAudioAnalysis
