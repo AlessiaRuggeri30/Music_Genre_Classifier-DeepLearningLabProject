@@ -4,7 +4,7 @@ import subprocess
 import os
 
 #Run on terminal:
-#python3 nomefile.py .
+#python3 main.py .
 
 
 files = glob.glob(sys.argv[1] + '/**/*.h5', recursive=True)
