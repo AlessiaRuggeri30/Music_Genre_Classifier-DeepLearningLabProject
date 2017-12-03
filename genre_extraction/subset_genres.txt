@@ -1,0 +1,10 @@
+# MILLION SONG GENRE DATASET
+# created by T. Bertin-Mahieux (2011) Columbia University
+# tb2332@columbia.edu
+# http://labrosa.ee.columbia.edu
+# GOAL: easy to use genre-like dataset extracted from the MSD
+#       Should not be used as a proper MIR task! Educational purposes only
+# FORMAT: # - denotes a comment
+          % - one line after comments, column names
+            - rest is data, comma-separated, one line per song
+%genre,track_id,artist_name,title,loudness,tempo,time_signature,key,mode,duration,avg_timbre1,avg_timbre2,avg_timbre3,avg_timbre4,avg_timbre5,avg_timbre6,avg_timbre7,avg_timbre8,avg_timbre9,avg_timbre10,avg_timbre11,avg_timbre12,var_timbre1,var_timbre2,var_timbre3,var_timbre4,var_timbre5,var_timbre6,var_timbre7,var_timbre8,var_timbre9,var_timbre10,var_timbre11,var_timbre12
