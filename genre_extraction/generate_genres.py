@@ -35,9 +35,7 @@ import genre_extraction.hdf5_getters as GETTERS
 
 # list of 10 genres hand-picked from musicbrainz
 # (loosely inspired by the genre in GZTAN genre dataset)
-GENRES = (
-'classic pop and rock', 'punk', 'folk', 'pop', 'dance and electronica', 'metal', 'jazz and blues', 'classical',
-'hip-hop', 'soul and reggae')
+GENRES = ('classic pop and rock', 'punk', 'folk', 'pop', 'dance and electronica', 'metal', 'jazz and blues', 'classical', 'hip-hop', 'soul and reggae')
 
 
 def path_from_trackid(msddir, trackid):
@@ -152,8 +150,8 @@ if __name__ == '__main__':
     res = conn_at.execute(q)
     top50mbtags = sorted(res.fetchall(), key=itemgetter(1), reverse=True)[:50]
     top50mbtags_names = map(lambda x: x[0], top50mbtags)
-#   for g in GENRES:
-#       assert g in top50mbtags_names, 'Wrong or unrecognized genre: ' + str(g)
+    for g in GENRES:
+        assert g in top50mbtags_names, 'Wrong or unrecognized genre: ' + str(g)
 
     # for each of these genre, select the artists for which this is the
     # most applied genre (among the 10)
