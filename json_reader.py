@@ -20,6 +20,11 @@ print('\tMusic genre: {}'.format(data[GEN]))
 print('\tList of segment starts: {}'.format(data[SEG_START]["value"]))
 print('\tList of MFCCs: {}'.format(data[MFCC]["value"]))
 
+# MFCCs structure:
+#       0   1   2   3   4   5   6   7   8   9   10  11
+# seg0 [                                               ]  -> ["value"][0]
+# seg1 [                                               ]  -> ["value"][1]
+# seg2 [                                               ]  -> ["value"][2]
 
 
     # pprint(data["datasets"][item])
