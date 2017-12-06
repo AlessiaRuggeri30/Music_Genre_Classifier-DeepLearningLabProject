@@ -3,7 +3,7 @@ import json
 from pprint import pprint
 
 JSON_DIR = "../trainingset"
-TRACK_FILE = "msd_genre_dataset.txt"
+TRACK_FILE = "genre_id.txt"
 
 files = os.listdir(JSON_DIR)
 track_ids = [file.split('.')[0] for file in files]
@@ -44,7 +44,31 @@ with open(TRACK_FILE, 'r', encoding='utf-8') as fl:
                     done += 1
 
                 # os.remove(file_name)
-                with open("../subtrainingset" + '/' + track_id + '.json', 'w', encoding='utf-8') as json_file:
+                folder = ""
+                if genre == "classic pop and rock":
+                    folder = folder + "classic pop and rock"
+                elif genre == "punk":
+                    folder = folder + "punk"
+                elif genre == "folk":
+                    folder = folder + "folk"
+                elif genre == "pop":
+                    folder = folder + "pop"
+                elif genre == "dance and electronica":
+                    folder = folder + "dance and electronica"
+                elif genre == "metal":
+                    folder = folder + "metal"
+                elif genre == "jazz and blues":
+                    folder = folder + "jazz and blues"
+                elif genre == "classical":
+                    folder = folder + "classical"
+                elif genre == "hip-hop":
+                    folder = folder + "hip-hop"
+                elif genre == "soul and reggae":
+                    folder = folder + "soul and reggae"
+                else:
+                    folder = folder + "other"
+
+                with open("../genre_trainingset/" + folder + '/' + track_id + '.json', 'w', encoding='utf-8') as json_file:
                     json.dump(to_store, json_file)
                     print('Done {} of {}'.format(done, len(track_ids)))
 

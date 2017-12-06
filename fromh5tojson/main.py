@@ -4,6 +4,7 @@ import subprocess
 import os
 
 #Run on terminal:
+#cd /Users/alessiaruggeri/GitHub/Music_Genre_Classificator-DeepLearningLabProject/MillionSongSubset
 #python3 main.py .
 
 

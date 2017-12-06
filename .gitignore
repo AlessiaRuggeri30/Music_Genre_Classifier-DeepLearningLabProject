@@ -1,6 +1,6 @@
 MillionSongSubset/
 MSongsDB/
 subtrainingset/
-trainingset/
+trainingset/**
 trainingset.zip
 .idea/
