@@ -2,7 +2,7 @@ import json
 from pprint import pprint
 
 
-file_directory = "subtrainingset/TRAAABD128F429CF47.json"
+file_directory = "./subtrainingset/TRAAABD128F429CF47.json"
 json_data = open(file_directory).read()
 
 GEN = "genre"
