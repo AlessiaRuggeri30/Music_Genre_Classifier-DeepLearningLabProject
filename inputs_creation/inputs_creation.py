@@ -1,6 +1,7 @@
 import json
 from pprint import pprint
 import numpy as np
+import time
 
 file_directory = "../subtrainingset/TRAAABD128F429CF47.json"
 json_data = open(file_directory).read()
@@ -9,6 +10,8 @@ GEN = "genre"
 SEG_START = "segments_start"
 MFCC = "segments_timbre"
 SONG = "songs"
+
+start = time.process_time()
 
 data = json.loads(json_data)
 
@@ -31,14 +34,14 @@ def MFCCs_manager(MFCCs):
 
 
 def normalize(x, minimum, maximum):
-    normalized = (2*(x - minimum)/(maximum - minimum))-1
+    normalized = (2 * (x - minimum) / (maximum - minimum)) - 1
     return normalized
 
 
 def input_normalizer(m, sd, d):
     realmin = np.amin([np.amin(m), np.amin(sd), np.amin(d)])
     realmax = np.amax([np.amax(m), np.amax(sd), np.amax(d)])
-    err = ((realmax - realmin) * 2)/100
+    err = ((realmax - realmin) * 2) / 100
     newmin = realmin - err
     newmax = realmax + err
 
@@ -65,3 +68,7 @@ input_normalizer(m, sd, d)
 # print('\tMFCCs standard deviation: {}'.format(sd))
 # print()
 # print('\tMFCCs delta: {}'.format(d))
+end = time.process_time()
+
+print()
+print('\tTime needed: {}'.format(end - start))

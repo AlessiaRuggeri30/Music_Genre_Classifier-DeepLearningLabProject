@@ -1,6 +1,3 @@
-MillionSongSubset/
-MSongsDB/
-subtrainingset/
-trainingset/**
-trainingset.zip
+other_dataset_things/
+genre_trainingset/
 .idea/
