@@ -33,27 +33,27 @@ def manage_dataset(dataset):
 
 '''Prepare dataset inputs and targets'''
 
-dataset = trainingset = np.load("./dataset/trainingset_array.npy")
+database = trainingset = np.load("./dataset/trainingset_array.npy")
 # dataset = validationset = np.load("./dataset/validationset_array.npy")
 # dataset = testset = np.load("./dataset/testset_array.npy")
 
-train_x, train_y = manage_dataset(dataset)
+train_x, train_y = manage_dataset(database)
 
 
 '''Parameters'''
 
 # hyperparameters
 learning_rate = 0.01
-epochs = 100
-batch_size = 512
-n_batches = len(dataset) // batch_size
+epochs = 50000
+batch_size = 128
+n_batches = len(database) // batch_size
 print("Number of batches for each epoch:", n_batches)
 
 # network parameters
 n_samples = trainingset.shape[0]
 n_input = 36  # input size
 n_classes = 10
-layers_dim = np.array([364, 128, 32, n_classes])
+layers_dim = np.array([64, 128, 32, n_classes])
 n_layers = len(layers_dim)
 dropout = 0.80  # avoid overfitting (randomly turns off neurons, to force new path research)
 
@@ -62,18 +62,41 @@ dropout = 0.80  # avoid overfitting (randomly turns off neurons, to force new pa
 
 # neural network variables
 x = tf.placeholder(tf.float32, [None, n_input], name='x')
-y = tf.placeholder(tf.int64, [None, 1], name='y')
-y = tf.one_hot(y, depth=n_classes, name='y_hot')
+y = tf.placeholder(tf.int64, [None, n_classes], name='y')
+# y = tf.one_hot(y, depth=n_classes, name='y_hot')
 
 keep_prob = tf.placeholder(tf.float32)
 
 # dataset variables
-dataset_x = tf.placeholder(tf.float32, [None, n_input])
-dataset_y = tf.placeholder(tf.int64, [None, n_classes])
+# dataset_x = tf.placeholder(tf.float32, [None, n_input])
+# dataset_y = tf.placeholder(tf.int64, [None, n_classes])
+#
+# dataset = tf.data.Dataset().from_tensor_slices((x, y)).batch(batch_size).repeat()
+# iterator = dataset.make_initializable_iterator()
 
-dataset = tf.data.Dataset().from_tensor_slices((x, y)).batch(batch_size).repeat()
-iterator = dataset.make_initializable_iterator()
 
+def getBatch(x, y, batch_size, iteration):
+    start_b = (iteration * batch_size) % len(x)
+    end_b = ((iteration * batch_size) + batch_size) % len(x)
+
+    if start_b < end_b:
+        return x[start_b:end_b], y[start_b:end_b]
+    else:
+        batch_x = np.vstack((x[start_b:], x[:end_b]))
+        batch_y = np.vstack((y[start_b:], y[:end_b]))
+
+        return batch_x, batch_y
+
+
+def one_hot_encoder(y):
+    # one hot encode
+    onehot = list()
+    for value in y:
+        letter = [0 for i in range(n_classes)]
+        letter[value[0]] = 1
+        onehot.append(letter)
+    onehot = np.array(onehot)
+    return onehot
 
 def create_layer(input, n_size, activation=None):
     # create weights and biases
@@ -92,20 +115,21 @@ def create_layer(input, n_size, activation=None):
 def create_model(input):
     for i in range(n_layers):
         if i == (n_layers - 1):
+            nonactived = create_layer(input, layers_dim[i])
             input = create_layer(input, layers_dim[i], tf.nn.softmax)
         else:       # tf.nn.tanh or tf.nn.relu
             input = tf.layers.dropout(create_layer(input, layers_dim[i], tf.nn.tanh), rate=dropout)
 
-    return input
+    return input, nonactived
 
 
 '''Perform training'''
 
 
 def model_training():
-    output = create_model(x)
+    output, output_nonactived = create_model(x)
 
-    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output, labels=y))
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output_nonactived, labels=y))
     train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
 
     correctness = tf.equal(tf.argmax(output, -1), tf.argmax(y, -1))
@@ -114,14 +138,16 @@ def model_training():
     # Initialize a session
     sess = tf.InteractiveSession()
     sess.run(tf.global_variables_initializer())
-
-    sess.run(iterator.initializer, feed_dict={x: train_x, 'y:0': train_y})
+    # sess.run(tf.one_hot(y, depth=n_classes), feed_dict={y: train_y})
+    # sess.run(iterator.initializer, feed_dict={x: train_x, 'y:0': train_y})
 
     for epoch in range(epochs):
         avg_loss = 0
         avg_acc = 0
-        for i in range(n_batches):
-            batch_x, batch_y = sess.run(iterator.get_next())
+
+        for i in range(batch_size):
+            batch_x, batch_y = getBatch(train_x, train_y, batch_size, i)
+            # batch_x, batch_y = sess.run(iterator.get_next())
             _, loss_value, acc = sess.run([train_step, loss, accuracy], feed_dict={x: batch_x, y: batch_y})
             avg_loss += loss_value
             avg_acc += acc
@@ -134,4 +160,5 @@ def model_training():
     print("FINISHED!")
 
 
+train_y = one_hot_encoder(train_y)
 model_training()
