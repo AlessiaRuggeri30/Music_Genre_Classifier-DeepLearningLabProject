@@ -102,9 +102,8 @@ def inputs_creator():
 			# n_coef = MFCCs.shape[1]
 			# print(n_seg, n_coef)
 			genre = data[GEN]
-			label = GENRE_TO_CLASSES[genre]
 
-			sample = np.array([MFCCs, label])
+			sample = input_creator(MFCCs, genre)
 
 			y.append(sample)
 
