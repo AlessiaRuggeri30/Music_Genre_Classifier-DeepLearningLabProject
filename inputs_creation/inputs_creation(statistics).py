@@ -9,17 +9,24 @@ SEG_START = "segments_start"
 MFCC = "segments_timbre"
 SONG = "songs"
 
+# GENRE_TO_CLASSES = {
+# 	"classic pop and rock": 0,
+# 	"classical": 1,
+# 	"dance and electronica": 2,
+# 	"folk": 3,
+# 	"hip-hop": 4,
+# 	"jazz and blues": 5,
+# 	"metal": 6,
+# 	"pop": 7,
+# 	"punk": 8,
+# 	"soul and reggae": 9
+# }
+
 GENRE_TO_CLASSES = {
 	"classic pop and rock": 0,
-	"classical": 1,
-	"dance and electronica": 2,
-	"folk": 3,
-	"hip-hop": 4,
-	"jazz and blues": 5,
-	"metal": 6,
-	"pop": 7,
-	"punk": 8,
-	"soul and reggae": 9
+	"dance and electronica": 1,
+	"jazz and blues": 2,
+	"punk": 3,
 }
 
 
@@ -102,6 +109,8 @@ def inputs_creator():
 			# n_coef = MFCCs.shape[1]
 			# print(n_seg, n_coef)
 			genre = data[GEN]
+			if genre not in (GENRE_TO_CLASSES):
+				continue
 
 			sample = input_creator(MFCCs, genre)
 
@@ -118,23 +127,22 @@ def split_dataset(dataset):
 	testset = []  # 10%
 
 	for i in range(n_classes):
-		if i in (0, 2, 5, 8):
-			print("splitting {} of {}".format(i, n_classes))
-			items = dataset[dataset[:, 1] == i]
-			class_len = len(items)
+		print("splitting {} of {}".format(i, n_classes))
+		items = dataset[dataset[:, 1] == i]
+		class_len = len(items)
 
-			perc_train = (class_len * percentages[0]) // 100
-			perc_val = (class_len * percentages[1]) // 100
-			# perc_test = class_len - (perc_train + perc_val)
+		perc_train = (class_len * percentages[0]) // 100
+		perc_val = (class_len * percentages[1]) // 100
+		# perc_test = class_len - (perc_train + perc_val)
 
-			trainingset.append(items[:perc_train])
-			validationset.append(items[perc_train:(perc_train + perc_val)])
-			testset.append(items[(perc_train + perc_val):])
+		trainingset.append(items[:perc_train])
+		validationset.append(items[perc_train:(perc_train + perc_val)])
+		testset.append(items[(perc_train + perc_val):])
 
 	training = []
 	validation = []
 	test = []
-	for j in range(10):
+	for j in range(4):
 		for k in range(len(trainingset[j])):
 			training.append(trainingset[j][k])
 		for h in range(len(validationset[j])):
