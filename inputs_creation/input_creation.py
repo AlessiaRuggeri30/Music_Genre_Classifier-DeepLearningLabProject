@@ -79,6 +79,7 @@ def split_dataset(dataset):
 	testset = []  # 10%
 
 	for i in range(n_classes):
+		print("splitting {} of {}".format(i, n_classes))
 		items = dataset[dataset[:, 1] == i]
 		class_len = len(items)
 
