@@ -1,6 +1,7 @@
 import json
 import glob
 import numpy as np
+import os
 import random
 import time
 
@@ -42,8 +43,8 @@ def inputs_creator():
 			data = json.loads(json_data)
 
 			MFCCs = np.asarray(data[MFCC]["value"])
-			n_seg = MFCCs.shape[0]
-			n_coef = MFCCs.shape[1]
+			# n_seg = MFCCs.shape[0]
+			# n_coef = MFCCs.shape[1]
 			# print(n_seg, n_coef)
 			genre = data[GEN]
 			label = GENRE_TO_CLASSES[genre]
@@ -127,4 +128,5 @@ fd = "../data/subset_np/"
 
 
 ''' Load dataset from numpy file '''
+print("---------- Loading data... ----------")
 db = np.load(fd + "trainingset_np.npy")
