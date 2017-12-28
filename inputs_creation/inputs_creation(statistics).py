@@ -83,7 +83,8 @@ def inputs_creator():
             data = json.loads(json_data)
 
             MFCCs = np.asarray(data[MFCC]["value"])
-            # n_seg = MFCCs.shape[0]
+            n_seg = MFCCs.shape[0]
+            print(n_seg)
             # n_coef = MFCCs.shape[1]
             genre = data[GEN]
 
@@ -97,7 +98,7 @@ def inputs_creator():
 
 
 '''Create dataset_array.npy'''
-# y = inputs_creator()
+y = inputs_creator()
 # np.save(file_directory + 'dataset_array.npy', y)
 
 
@@ -154,12 +155,16 @@ trainingset = np.load(trainingset)
 validationset = np.load(validationset)
 testset = np.load(testset)
 
+# print(trainingset.shape)
+# print(validationset.shape)
+# print(testset.shape)
+
 train_x = np.array([x[0] for x in trainingset])[:3]
 train_y = np.array([[y[1] for y in trainingset]])
 train_y = train_y.reshape([-1, 1])[:3]
 
-print(train_x)
-print(train_y)
+# print(train_x)
+# print(train_y)
 
 c = list(zip(train_x, train_y))
 random.shuffle(c)
@@ -167,8 +172,10 @@ train_x, train_y = map(list,zip(*c))
 train_x = np.array([x for x in train_x])
 train_y = np.array([y for y in train_y])
 
-print(train_x)
-print(train_y)
+# print(train_x)
+# print(train_y)
+
+
 
 
 # input_normalizer(m, sd, d)

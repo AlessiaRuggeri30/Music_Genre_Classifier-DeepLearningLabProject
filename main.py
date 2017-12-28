@@ -1,3 +1,6 @@
+''' FEED-FORWARD NEURAL NETWORK'''
+
+
 import numpy as np
 import math
 import tensorflow as tf
@@ -45,7 +48,7 @@ train_x, train_y = manage_dataset(database)
 # hyperparameters
 learning_rate = 0.01
 epochs = 50000
-batch_size = 128
+batch_size = 64
 n_batches = len(database) // batch_size
 print("Number of batches for each epoch:", n_batches)
 
@@ -53,9 +56,9 @@ print("Number of batches for each epoch:", n_batches)
 n_samples = trainingset.shape[0]
 n_input = 36  # input size
 n_classes = 10
-layers_dim = np.array([64, 128, 32, n_classes])
+layers_dim = np.array([64, 128, 64, n_classes])
 n_layers = len(layers_dim)
-dropout = 0.80  # avoid overfitting (randomly turns off neurons, to force new path research)
+dropout = 0.75  # avoid overfitting (randomly turns off neurons, to force new path research)
 
 
 '''Variables'''
@@ -145,7 +148,7 @@ def model_training():
         avg_loss = 0
         avg_acc = 0
 
-        for i in range(batch_size):
+        for i in range(n_batches):
             batch_x, batch_y = getBatch(train_x, train_y, batch_size, i)
             # batch_x, batch_y = sess.run(iterator.get_next())
             _, loss_value, acc = sess.run([train_step, loss, accuracy], feed_dict={x: batch_x, y: batch_y})
