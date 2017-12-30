@@ -1,6 +1,9 @@
+''' CONVOLUTIONAL NEURAL NETWORK'''
+
 import json
 import glob
 import numpy as np
+import os
 import random
 import time
 
@@ -33,50 +36,12 @@ GENRE_TO_CLASSES = {
 ''' Source folder of the dataset '''
 # file_directory = "../data/dataset/"
 # file_directory = "../data/subset/"
+# file_directory = "../data/dataset4c/"
 file_directory = "../data/subset4c/"
 
 n_classes = len(GENRE_TO_CLASSES)
 percentages = [70, 20, 10]
-
-
-''' Useless things '''
-''' ------------------------------ '''
-
-# start = time.process_time()
-
-# print('Track id: {}'.format(data[SONG]["value"][0][30]))
-# print('\tMusic genre: {}'.format(data[GEN]))
-# print('\tList of segment starts: {}'.format(data[SEG_START]["value"]))
-# print('\tList of MFCCs: {}'.format(data[MFCC]["value"]))
-# print()
-
-def normalize(x, minimum, maximum):
-	normalized = (2 * (x - minimum) / (maximum - minimum)) - 1
-	return normalized
-
-
-def input_normalizer(m, sd, d):
-	realmin = np.amin([np.amin(m), np.amin(sd), np.amin(d)])
-	realmax = np.amax([np.amax(m), np.amax(sd), np.amax(d)])
-	err = ((realmax - realmin) * 2) / 100
-	newmin = realmin - err
-	newmax = realmax + err
-
-	m_norm = np.array(list())
-	sd_norm = np.array(list())
-	d_norm = np.array(list())
-
-	for x in m:
-		m_norm = np.append(m_norm, normalize(x, newmin, newmax))
-	for x in sd:
-		sd_norm = np.append(sd_norm, normalize(x, newmin, newmax))
-	for x in d:
-		d_norm = np.append(d_norm, normalize(x, newmin, newmax))
-
-	return m_norm, sd_norm, d_norm
-
-
-''' ------------------------------ '''
+statistics = False		# if true, mean sd and delta are computed
 
 
 def MFCCs_manager(MFCCs):
@@ -86,9 +51,8 @@ def MFCCs_manager(MFCCs):
 	return m, sd, d
 
 
-def input_creator(MFCCs, genre):
+def input_creator(MFCCs, label):
 	m, sd, d = MFCCs_manager(MFCCs)
-	label = GENRE_TO_CLASSES[genre]
 	values = np.append(m, [sd, d])
 	sample = [values, label]
 	return sample
@@ -111,14 +75,32 @@ def inputs_creator():
 			genre = data[GEN]
 			if genre not in (GENRE_TO_CLASSES):
 				continue
+			label = GENRE_TO_CLASSES[genre]
 
-			sample = input_creator(MFCCs, genre)
+			if statistics:
+				sample = input_creator(MFCCs, label)
+			else:
+				sample = np.array([MFCCs, label])
 
 			y.append(sample)
+
+		# if i == 3000:
+		# 	break
 
 	y = np.array(y)
 
 	return y
+
+
+def dataset_padding(y):
+	max_num_fragment = np.max([(item[0].shape[0]+1) for item in y])
+	max_shape = [max_num_fragment, 12]
+
+	for song in y:
+		item = np.zeros((max_shape[0], max_shape[1]))
+		item[:song[0].shape[0], :song[0].shape[1]] = song[0]
+
+		song[0] = item
 
 
 def split_dataset(dataset):
@@ -160,11 +142,14 @@ def split_dataset(dataset):
 ''' Destination folder for the numpy file '''
 # fd = "../data/dataset_np/"
 # fd = "../data/subset_np/"
+# fd = "../data/dataset4c_np/"
 fd = "../data/subset4c_np/"
 
 
 ''' Input creator (create the array representing the whole dataset) '''
 y = inputs_creator()
+if not statistics:
+	dataset_padding(y)
 
 np.save(fd + 'dataset_np.npy', y)
 
@@ -178,39 +163,4 @@ np.save(fd + 'testset_np.npy', testset)
 
 ''' Load dataset from numpy file '''
 # print("---------- Loading data... ----------")
-# trainingset = fd + "trainingset_array.npy"
-# validationset = fd + "validationset_array.npy"
-# testset = fd + "testset_array.npy"
-#
-# trainingset = np.load(trainingset)
-# validationset = np.load(validationset)
-# testset = np.load(testset)
-
-
-''' Some test '''
-# print(trainingset.shape)
-# print(validationset.shape)
-# print(testset.shape)
-
-# train_x = np.array([x[0] for x in trainingset])[:3]
-# train_y = np.array([[y[1] for y in trainingset]])
-# train_y = train_y.reshape([-1, 1])[:3]
-
-# print(train_x)
-# print(train_y)
-
-# c = list(zip(train_x, train_y))
-# random.shuffle(c)
-# train_x, train_y = map(list, zip(*c))
-# train_x = np.array([x for x in train_x])
-# train_y = np.array([y for y in train_y])
-
-# print(train_x)
-# print(train_y)
-
-
-
-# end = time.process_time()
-
-# print()
-# print('\tTime needed: {}'.format(end - start))
+# db = np.load(fd + "trainingset_np.npy")
