@@ -62,7 +62,7 @@ print("Number of batches for each epoch:", n_batches)
 n_samples = database.shape[0]
 n_seg = train_x[0].shape[0]  # 5468
 n_coef = train_x[0].shape[1]  # 12
-n_classes = 10
+n_classes = 4
 layers_dim = np.array([64, 128, 64, n_classes])
 n_layers = len(layers_dim)
 dropout = 0.8
@@ -93,7 +93,7 @@ def one_hot_encoder(y):
 	''' Function that applies one hot encoding to targets '''
 	onehot = list()
 	for value in y:
-		letter = [0 for i in range(n_classes)]
+		letter = [0 for _ in range(n_classes)]
 		letter[value[0]] = 1
 		onehot.append(letter)
 	onehot = np.array(onehot)
@@ -161,9 +161,11 @@ def convolutional_neural_network(x):
 
 	conv2 = create_conv_layer(conv1, 16, (128, 4), 32)
 	# print(conv2.shape)
+	conv2_shape = int(conv2.shape[1])
 
-	fc = tf.reshape(conv2, [-1, 1367 * 3 * 32])  # conv2.shape
-	fc = create_fc_layer(fc, [1367 * 3 * 32, 512])  # conv2.shape, num of neurons in the fc layer
+
+	fc = tf.reshape(conv2, [-1, conv2_shape * 3 * 32])  # conv2.shape
+	fc = create_fc_layer(fc, [conv2_shape * 3 * 32, 512])  # conv2.shape, num of neurons in the fc layer
 	fc = tf.nn.dropout(fc, dropout)
 
 	output = create_fc_layer(fc, [512, n_classes])	#num of neurons in the fc layer, n_classes
@@ -211,5 +213,6 @@ def model_training():
 	print("FINISHED!")
 
 
+tf.set_random_seed(0)
 train_y = one_hot_encoder(train_y)
 model_training()

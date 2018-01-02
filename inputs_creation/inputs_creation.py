@@ -41,7 +41,7 @@ file_directory = "../data/subset4c/"
 
 n_classes = len(GENRE_TO_CLASSES)
 percentages = [70, 20, 10]
-statistics = False		# if true, mean sd and delta are computed
+statistics = False		# if true: mean, standard deviation and delta are computed
 
 
 def MFCCs_manager(MFCCs):
@@ -151,13 +151,17 @@ y = inputs_creator()
 if not statistics:
 	dataset_padding(y)
 
-np.save(fd + 'dataset_np.npy', y)
+# print("---------- Saving dataset... ----------")
+# np.save(fd + 'dataset_np.npy', y)
 
 
 ''' Split dataset (split the whole dataset into training, validation and test set '''
 trainingset, validationset, testset = split_dataset(y)
+print("---------- Saving trainingsetset... ----------")
 np.save(fd + 'trainingset_np.npy', trainingset)
+print("---------- Saving validationset... ----------")
 np.save(fd + 'validationset_np.npy', validationset)
+print("---------- Saving testset... ----------")
 np.save(fd + 'testset_np.npy', testset)
 
 

@@ -1,9 +1,7 @@
-''' FEED-FORWARD NEURAL NETWORK'''
-
-
 import numpy as np
 import math
 import tensorflow as tf
+from tensorflow.contrib import rnn
 import random
 
 # GENRE_TO_CLASSES = {
@@ -48,42 +46,36 @@ print("---------- Loading data... ----------")
 # database = trainingset = np.load("./data/dataset/trainingset_array.npy")
 # dataset = validationset = np.load("./data/dataset/validationset_array.npy")
 # dataset = testset = np.load("./data/dataset/testset_array.npy")
-database = trainingset = np.load("./data/dataset4c_np/trainingset_np.npy")
+database = trainingset = np.load("./data/subset4c_np/trainingset_np.npy")
 
 train_x, train_y = manage_dataset(database)
 
 
-''' Parameters '''
+'''Parameters'''
+
 # hyperparameters
 learning_rate = 0.001
-epochs = 1000
-batch_size = 512
+epochs = 10
+batch_size = 256
 n_batches = len(database) // batch_size
 print("Number of batches for each epoch:", n_batches)
 
 # network parameters
-n_samples = trainingset.shape[0]
-n_input = 36  # input size
+n_samples = database.shape[0]
+n_seg = train_x[0].shape[0]  # 8290
+n_coef = train_x[0].shape[1]  # 12
 n_classes = 4
-layers_dim = np.array([64, 128, 128, n_classes])
+layers_dim = np.array([256, 256])
 n_layers = len(layers_dim)
-dropout = 0.80
-
+fc_layer_dim = n_classes
+dropout = 0.5
+print("Number of segments for each song:", n_seg)
 
 ''' Variables '''
-# neural network variables
-x = tf.placeholder(tf.float32, [None, n_input], name='x')
-y = tf.placeholder(tf.int64, [None, n_classes], name='y')
-# y = tf.one_hot(y, depth=n_classes, name='y_hot')
+x = tf.placeholder(tf.float32, [batch_size, n_seg, n_coef])
+y = tf.placeholder(tf.int64, [None, n_classes])
 
 keep_prob = tf.placeholder(tf.float32)
-
-# dataset variables
-# dataset_x = tf.placeholder(tf.float32, [None, n_input])
-# dataset_y = tf.placeholder(tf.int64, [None, n_classes])
-#
-# dataset = tf.data.Dataset().from_tensor_slices((x, y)).batch(batch_size).repeat()
-# iterator = dataset.make_initializable_iterator()
 
 
 def getBatch(x, y, batch_size, iteration):
@@ -110,43 +102,66 @@ def one_hot_encoder(y):
 	onehot = np.array(onehot)
 	return onehot
 
-def create_layer(input, n_size, activation=None):
-	''' Function that return a layer of neurons with the given size and activation'''
-	# create weights and biases
-	size_input = input.get_shape().as_list()[-1]
-	W = tf.Variable(tf.truncated_normal(shape=[size_input, n_size], stddev=0.1))
-	b = tf.Variable(tf.zeros([n_size]))
 
-	# calculate output
-	output = tf.matmul(input, W) + b
+''' LSTM functions'''
 
-	if activation is not None:
-		output = activation(output)
+
+def weight_variable(shape):
+	''' Function that return random weights of given shape '''
+	initial = tf.truncated_normal(shape, stddev=0.1)
+	return tf.Variable(initial)
+
+
+def bias_variable(shape):
+	''' Function that return random biases of given shape '''
+	initial = tf.constant(0.1, shape=shape)
+	return tf.Variable(initial)
+
+
+def create_LSTM_layers(input, rnn_shape, dropout):
+	cells = [tf.nn.rnn_cell.LSTMCell(size) for size in rnn_shape]
+	if (dropout != None):
+		cells = [rnn.DropoutWrapper(cell, input_keep_prob=dropout, output_keep_prob = dropout) for cell in cells]
+
+	multi_cells = tf.nn.rnn_cell.MultiRNNCell(cells)  # create a RNN cell composed sequentially of a number of RNNCells
+	initial_state = multi_cells.zero_state(batch_size=batch_size, dtype=tf.float32)
+
+	val, state = tf.nn.dynamic_rnn(multi_cells, input, initial_state=initial_state, dtype=tf.float32)
+
+	val = tf.transpose(val, [1, 0, 2])
+	val = val[-1]
+
+	return val
+
+
+def create_fc_layer(x, layer_dim):
+	''' Function that return a feed-forward layer of activated neurons
+		with the given size'''
+	size_input = x.get_shape().as_list()[-1]
+	W = weight_variable([size_input, layer_dim])
+	b = bias_variable([layer_dim])
+
+	layer = tf.matmul(x, W) + b
+	layer = tf.nn.softmax(layer)
+
+	return layer
+
+
+def recurrent_neural_network(x):
+	# x = reshape()
+	val = create_LSTM_layers(x, layers_dim, dropout)
+	output = create_fc_layer(val, fc_layer_dim)
 	return output
-
-
-def fc_neural_network(input):
-	''' Function that uses create_layer to generate a feed-forward neural network;
-		Only the last layer is activated'''
-	for i in range(n_layers):
-		if i == (n_layers - 1):
-			nonactived = create_layer(input, layers_dim[i])
-			input = create_layer(input, layers_dim[i], tf.nn.softmax)
-		else:       # tf.nn.tanh or tf.nn.relu
-			input = tf.layers.dropout(create_layer(input, layers_dim[i], tf.nn.tanh), rate=dropout)
-
-	return input, nonactived
-
 
 '''Perform training'''
 
 
 def model_training():
 	''' Function that performs the training of the neural network '''
-	output, output_nonactived = fc_neural_network(x)
+	output = recurrent_neural_network(x)
 
-	loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output_nonactived, labels=y))
-	train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
+	loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output, labels=y))
+	train_step = tf.train.RMSPropOptimizer(learning_rate).minimize(loss)
 
 	correctness = tf.equal(tf.argmax(output, -1), tf.argmax(y, -1))
 	accuracy = tf.reduce_mean(tf.cast(correctness, 'float'))
@@ -154,24 +169,26 @@ def model_training():
 	# Initialize a session
 	sess = tf.InteractiveSession()
 	sess.run(tf.global_variables_initializer())
-	# sess.run(tf.one_hot(y, depth=n_classes), feed_dict={y: train_y})
-	# sess.run(iterator.initializer, feed_dict={x: train_x, 'y:0': train_y})
 
 	for epoch in range(epochs):
+		print("---------")
+		print("Computing epoch {} of {}".format(epoch, epochs))
 		avg_loss = 0
 		avg_acc = 0
 
 		for i in range(n_batches):
+			print("\tComputing batch {} of {}".format(i, n_batches))
 			batch_x, batch_y = getBatch(train_x, train_y, batch_size, i)
-			# batch_x, batch_y = sess.run(iterator.get_next())
 			_, loss_value, acc = sess.run([train_step, loss, accuracy], feed_dict={x: batch_x, y: batch_y})
+			print("\tloss: ", loss_value)
+			print("\tacc: ", acc)
 			avg_loss += loss_value
 			avg_acc += acc
 
 		avg_loss = avg_loss / n_batches
 		avg_acc = avg_acc / n_batches
-		print("---------")
-		print("Epoch: {}\n  AVG Loss: {:.5f}\n  AVG acc: {:.5f}".format(epoch+1, avg_loss, avg_acc))
+		print("----- Epoch: {}\n  AVG Loss: {:.5f}\n  AVG acc: {:.5f}".format(epoch, avg_loss, avg_acc))
+		print()
 
 	print("FINISHED!")
 
