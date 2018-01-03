@@ -2,6 +2,7 @@
 
 
 import numpy as np
+import matplotlib.pyplot as plt
 import math
 import tensorflow as tf
 import random
@@ -56,7 +57,7 @@ train_x, train_y = manage_dataset(database)
 ''' Parameters '''
 # hyperparameters
 learning_rate = 0.001
-epochs = 1000
+epochs = 50
 batch_size = 512
 n_batches = len(database) // batch_size
 print("Number of batches for each epoch:", n_batches)
@@ -110,6 +111,10 @@ def one_hot_encoder(y):
 	onehot = np.array(onehot)
 	return onehot
 
+
+''' Feed-Forward functions'''
+
+
 def create_layer(input, n_size, activation=None):
 	''' Function that return a layer of neurons with the given size and activation'''
 	# create weights and biases
@@ -141,6 +146,29 @@ def fc_neural_network(input):
 '''Perform training'''
 
 
+def plot_results(title, tot_loss, tot_acc, y_lim=True):
+	plt.close()
+	lim = 10 if y_lim else max(tot_loss)+1
+	y_step = 0.5
+
+	plt.suptitle(title,
+				 fontsize=14, fontweight="bold")
+	plt.title("learning_rate = {},   epochs = {},   batch_size = {},   n_classes = {},   dropout = {}"
+			  .format(learning_rate, epochs, batch_size, n_classes, dropout),
+			  fontsize=10)
+	plt.xlabel("Epochs")
+	plt.ylabel("Values")
+	plt.plot(tot_loss, label="loss")
+	plt.plot(tot_acc, label="accuracy")
+	plt.xlim(0, epochs)
+	plt.ylim(0, lim)
+	plt.axhline(y=1, c="lightgrey", linewidth=0.7, zorder=0)
+	plt.xticks(np.arange(0, epochs, 10))
+	plt.yticks(np.arange(0, lim, y_step))
+	plt.legend()
+	plt.show()
+
+
 def model_training():
 	''' Function that performs the training of the neural network '''
 	output, output_nonactived = fc_neural_network(x)
@@ -154,8 +182,12 @@ def model_training():
 	# Initialize a session
 	sess = tf.InteractiveSession()
 	sess.run(tf.global_variables_initializer())
+	saver = tf.train.Saver()
 	# sess.run(tf.one_hot(y, depth=n_classes), feed_dict={y: train_y})
 	# sess.run(iterator.initializer, feed_dict={x: train_x, 'y:0': train_y})
+
+	tot_loss = []
+	tot_acc = []
 
 	for epoch in range(epochs):
 		avg_loss = 0
@@ -170,12 +202,25 @@ def model_training():
 
 		avg_loss = avg_loss / n_batches
 		avg_acc = avg_acc / n_batches
+		tot_loss.append(avg_loss)
+		tot_acc.append(avg_acc)
 		print("---------")
 		print("Epoch: {}\n  AVG Loss: {:.5f}\n  AVG acc: {:.5f}".format(epoch+1, avg_loss, avg_acc))
 
 	print("FINISHED!")
+	print()
+	print("---------- Saving model... ----------")
+	save_path = saver.save(sess, "models/fc_model/fc_model.ckpt")
+	print("Model saved in file: %s" % save_path)
+	print()
+	print("---------- Plotting results... ----------")
+	plot_results("Feed-Forward Neural Network", tot_loss, tot_acc, y_lim=False)
 
 
 tf.set_random_seed(0)
 train_y = one_hot_encoder(train_y)
 model_training()
+
+'''Just after sess.run(tf.global_variables_initializer())'''
+# saver.restore(sess, "models/fc_model/fc_model.ckpt")
+# print("Model restored.")

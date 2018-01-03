@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import math
 import tensorflow as tf
 from tensorflow.contrib import rnn
@@ -155,6 +156,29 @@ def recurrent_neural_network(x):
 '''Perform training'''
 
 
+def plot_results(title, tot_loss, tot_acc, y_lim=True):
+	plt.close()
+	lim = 10 if y_lim else max(tot_loss)+1
+	y_step = 0.5
+
+	plt.suptitle(title,
+				 fontsize=14, fontweight="bold")
+	plt.title("learning_rate = {},   epochs = {},   batch_size = {},   n_classes = {},   dropout = {}"
+			  .format(learning_rate, epochs, batch_size, n_classes, dropout),
+			  fontsize=10)
+	plt.xlabel("Epochs")
+	plt.ylabel("Values")
+	plt.plot(tot_loss, label="loss")
+	plt.plot(tot_acc, label="accuracy")
+	plt.xlim(0, epochs)
+	plt.ylim(0, lim)
+	plt.axhline(y=1, c="lightgrey", linewidth=0.7, zorder=0)
+	plt.xticks(np.arange(0, epochs, 1.0))
+	plt.yticks(np.arange(0, lim, y_step))
+	plt.legend()
+	plt.show()
+
+
 def reverse_dic(ind):
 	genre = list(GENRE_TO_CLASSES.keys())[list(GENRE_TO_CLASSES.values()).index(ind)]
 	return genre
@@ -173,6 +197,10 @@ def model_training():
 	# Initialize a session
 	sess = tf.InteractiveSession()
 	sess.run(tf.global_variables_initializer())
+	saver = tf.train.Saver()
+
+	tot_loss = []
+	tot_acc = []
 
 	for epoch in range(epochs):
 		print("---------")
@@ -201,13 +229,17 @@ def model_training():
 			else:
 				_, loss_value, acc = sess.run([train_step, loss, accuracy],
 											  feed_dict={x: batch_x, y: batch_y})
-			print("\tloss: ", loss_value)
-			print("\tacc: ", acc)
+
+			if i % 100 == 0:
+				print("\tloss: ", loss_value)
+				print("\tacc: ", acc)
 			avg_loss += loss_value
 			avg_acc += acc
 
 		avg_loss = avg_loss / n_batches
 		avg_acc = avg_acc / n_batches
+		tot_loss.append(avg_loss)
+		tot_acc.append(avg_acc)
 		print("----- Epoch: {}\n  AVG Loss: {:.5f}\n  AVG acc: {:.5f}".format(epoch, avg_loss, avg_acc))
 		if batch_size == 1:
 			for i in range(n_classes):
@@ -217,6 +249,14 @@ def model_training():
 		print()
 
 	print("FINISHED!")
+	print()
+	print("---------- Saving model... ----------")
+	save_path = saver.save(sess, "models/lstm_model/lstm_model.ckpt")
+	print("Model saved in file: %s" % save_path)
+	print()
+	print("---------- Plotting results... ----------")
+	plot_results("Recurrent Neural Network", tot_loss, tot_acc)
+	plot_results("Recurrent Neural Network", tot_loss, tot_acc, y_lim=False)
 
 
 tf.set_random_seed(0)
