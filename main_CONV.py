@@ -253,7 +253,7 @@ def model_training():
 
 			if i % 100 == 0:
 				print("\tloss: ", loss_value)
-				print("\tacc: ", acc)
+				# print("\tacc: ", acc)
 			avg_loss += loss_value
 			avg_acc += acc
 
