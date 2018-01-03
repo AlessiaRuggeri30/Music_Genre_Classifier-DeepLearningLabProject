@@ -50,13 +50,12 @@ database = trainingset = np.load("./data/subset4c_np/trainingset_np.npy")
 
 train_x, train_y = manage_dataset(database)
 
-
 '''Parameters'''
 
 # hyperparameters
 learning_rate = 0.001
 epochs = 10
-batch_size = 256
+batch_size = 1
 n_batches = len(database) // batch_size
 print("Number of batches for each epoch:", n_batches)
 
@@ -68,11 +67,11 @@ n_classes = 4
 layers_dim = np.array([256, 256])
 n_layers = len(layers_dim)
 fc_layer_dim = n_classes
-dropout = 0.5
+dropout = 0.8
 print("Number of segments for each song:", n_seg)
 
 ''' Variables '''
-x = tf.placeholder(tf.float32, [batch_size, n_seg, n_coef])
+x = tf.placeholder(tf.float32, [None, n_seg, n_coef])
 y = tf.placeholder(tf.int64, [None, n_classes])
 
 keep_prob = tf.placeholder(tf.float32)
@@ -121,16 +120,13 @@ def bias_variable(shape):
 def create_LSTM_layers(input, rnn_shape, dropout):
 	cells = [tf.nn.rnn_cell.LSTMCell(size) for size in rnn_shape]
 	if (dropout != None):
-		cells = [rnn.DropoutWrapper(cell, input_keep_prob=dropout, output_keep_prob = dropout) for cell in cells]
+		cells = [rnn.DropoutWrapper(cell, input_keep_prob=dropout, output_keep_prob=dropout) for cell in cells]
 
 	multi_cells = tf.nn.rnn_cell.MultiRNNCell(cells)  # create a RNN cell composed sequentially of a number of RNNCells
 	initial_state = multi_cells.zero_state(batch_size=batch_size, dtype=tf.float32)
 
 	val, state = tf.nn.dynamic_rnn(multi_cells, input, initial_state=initial_state, dtype=tf.float32)
-
-	val = tf.transpose(val, [1, 0, 2])
-	val = val[-1]
-
+	val = tf.reshape(val, [-1, rnn_shape[-1]])
 	return val
 
 
@@ -142,25 +138,33 @@ def create_fc_layer(x, layer_dim):
 	b = bias_variable([layer_dim])
 
 	layer = tf.matmul(x, W) + b
-	layer = tf.nn.softmax(layer)
 
 	return layer
 
 
 def recurrent_neural_network(x):
-	# x = reshape()
 	val = create_LSTM_layers(x, layers_dim, dropout)
 	output = create_fc_layer(val, fc_layer_dim)
-	return output
+
+	output = tf.slice(output, [int(output.shape[0]) - batch_size, 0], [batch_size, n_classes])
+	output_activated = tf.nn.softmax(output)
+
+	return output_activated, output
+
 
 '''Perform training'''
 
 
+def reverse_dic(ind):
+	genre = list(GENRE_TO_CLASSES.keys())[list(GENRE_TO_CLASSES.values()).index(ind)]
+	return genre
+
+
 def model_training():
 	''' Function that performs the training of the neural network '''
-	output = recurrent_neural_network(x)
+	output, output_nonactivated = recurrent_neural_network(x)
 
-	loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output, labels=y))
+	loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output_nonactivated, labels=y))
 	train_step = tf.train.RMSPropOptimizer(learning_rate).minimize(loss)
 
 	correctness = tf.equal(tf.argmax(output, -1), tf.argmax(y, -1))
@@ -173,13 +177,30 @@ def model_training():
 	for epoch in range(epochs):
 		print("---------")
 		print("Computing epoch {} of {}".format(epoch, epochs))
+		genres_acc = []
 		avg_loss = 0
 		avg_acc = 0
+		right = [0] * n_classes
+		all = [0] * n_classes
 
 		for i in range(n_batches):
 			print("\tComputing batch {} of {}".format(i, n_batches))
 			batch_x, batch_y = getBatch(train_x, train_y, batch_size, i)
-			_, loss_value, acc = sess.run([train_step, loss, accuracy], feed_dict={x: batch_x, y: batch_y})
+			# _, loss_value, acc = sess.run([train_step, loss, accuracy],
+			# 							  feed_dict={x: batch_x, y: batch_y})
+
+			if batch_size == 1:
+				out, _, loss_value, acc = sess.run([output, train_step, loss, accuracy],
+												   feed_dict={x: batch_x, y: batch_y})
+				out = np.argmax(out)
+				target = np.argmax(batch_y)
+				if out == target:
+					right[target] += 1
+				all[target] += 1
+
+			else:
+				_, loss_value, acc = sess.run([train_step, loss, accuracy],
+											  feed_dict={x: batch_x, y: batch_y})
 			print("\tloss: ", loss_value)
 			print("\tacc: ", acc)
 			avg_loss += loss_value
@@ -188,6 +209,11 @@ def model_training():
 		avg_loss = avg_loss / n_batches
 		avg_acc = avg_acc / n_batches
 		print("----- Epoch: {}\n  AVG Loss: {:.5f}\n  AVG acc: {:.5f}".format(epoch, avg_loss, avg_acc))
+		if batch_size == 1:
+			for i in range(n_classes):
+				genres_acc.append(right[i] / all[i] if all[i] != 0 else 0)
+			for i in range(n_classes):
+				print("   ", reverse_dic(i), ": {:.4f}".format(genres_acc[i]))
 		print()
 
 	print("FINISHED!")

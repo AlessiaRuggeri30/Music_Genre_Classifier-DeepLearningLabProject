@@ -3,26 +3,26 @@ import math
 import tensorflow as tf
 import random
 
-GENRE_TO_CLASSES = {
-	"classic pop and rock": 0,
-	"classical": 1,
-	"dance and electronica": 2,
-	"folk": 3,
-	"hip-hop": 4,
-	"jazz and blues": 5,
-	"metal": 6,
-	"pop": 7,
-	"punk": 8,
-	"soul and reggae": 9
-}
-
-
 # GENRE_TO_CLASSES = {
 # 	"classic pop and rock": 0,
-# 	"dance and electronica": 1,
-# 	"jazz and blues": 2,
-# 	"punk": 3,
+# 	"classical": 1,
+# 	"dance and electronica": 2,
+# 	"folk": 3,
+# 	"hip-hop": 4,
+# 	"jazz and blues": 5,
+# 	"metal": 6,
+# 	"pop": 7,
+# 	"punk": 8,
+# 	"soul and reggae": 9
 # }
+
+
+GENRE_TO_CLASSES = {
+	"classic pop and rock": 0,
+	"dance and electronica": 1,
+	"jazz and blues": 2,
+	"punk": 3,
+}
 
 
 def manage_dataset(dataset):
@@ -52,9 +52,9 @@ train_x, train_y = manage_dataset(database)
 
 ''' Parameters '''
 # hyperparameters
-learning_rate = 0.01
+learning_rate = 0.001
 epochs = 10
-batch_size = 512
+batch_size = 1
 n_batches = len(database) // batch_size
 print("Number of batches for each epoch:", n_batches)
 
@@ -69,7 +69,7 @@ dropout = 0.8
 print("Number of segments for each song:", n_seg)
 
 ''' Variables '''
-x = tf.placeholder(tf.float32, [batch_size, n_seg, n_coef])
+x = tf.placeholder(tf.float32, [None, n_seg, n_coef])
 y = tf.placeholder(tf.int64, [None, n_classes])
 
 keep_prob = tf.placeholder(tf.float32)
@@ -176,6 +176,11 @@ def convolutional_neural_network(x):
 ''' Perform training '''
 
 
+def reverse_dic(ind):
+	genre = list(GENRE_TO_CLASSES.keys())[list(GENRE_TO_CLASSES.values()).index(ind)]
+	return genre
+
+
 def model_training():
 	''' Function that performs the training of the neural network '''
 	output = convolutional_neural_network(x)
@@ -193,13 +198,31 @@ def model_training():
 	for epoch in range(epochs):
 		print("---------")
 		print("Computing epoch {} of {}".format(epoch, epochs))
+		genres_acc = []
 		avg_loss = 0
 		avg_acc = 0
+		right = [0] * n_classes
+		all = [0] * n_classes
 
 		for i in range(n_batches):
 			print("\tComputing batch {} of {}".format(i, n_batches))
 			batch_x, batch_y = getBatch(train_x, train_y, batch_size, i)
-			_, loss_value, acc = sess.run([train_step, loss, accuracy], feed_dict={x: batch_x, y: batch_y})
+			# _, loss_value, acc = sess.run([train_step, loss, accuracy],
+			# 							  feed_dict={x: batch_x, y: batch_y})
+
+			if batch_size == 1:
+				out, _, loss_value, acc = sess.run([output, train_step, loss, accuracy],
+												   feed_dict={x: batch_x, y: batch_y})
+				out = np.argmax(out)
+				target = np.argmax(batch_y)
+				if out == target:
+					right[target] += 1
+				all[target] += 1
+
+			else:
+				_, loss_value, acc = sess.run([train_step, loss, accuracy],
+											  feed_dict={x: batch_x, y: batch_y})
+
 			print("\tloss: ", loss_value)
 			print("\tacc: ", acc)
 			avg_loss += loss_value
@@ -208,6 +231,11 @@ def model_training():
 		avg_loss = avg_loss / n_batches
 		avg_acc = avg_acc / n_batches
 		print("----- Epoch: {}\n  AVG Loss: {:.5f}\n  AVG acc: {:.5f}".format(epoch, avg_loss, avg_acc))
+		if batch_size == 1:
+			for i in range(n_classes):
+				genres_acc.append(right[i] / all[i] if all[i] != 0 else 0)
+			for i in range(n_classes):
+				print("   ", reverse_dic(i), ": {:.4f}".format(genres_acc[i]))
 		print()
 
 	print("FINISHED!")
