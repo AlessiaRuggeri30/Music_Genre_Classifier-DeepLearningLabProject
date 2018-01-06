@@ -61,7 +61,7 @@ print("Number of batches for each epoch:", n_batches)
 
 # network parameters
 n_samples = database.shape[0]
-n_seg = train_x[0].shape[0]  # 5468
+n_seg = train_x[0].shape[0]
 n_coef = train_x[0].shape[1]  # 12
 n_classes = 4
 layers_dim = np.array([64, 128, 64, n_classes])
@@ -148,7 +148,7 @@ def create_fc_layer(x, shape):
 	b = bias_variable([shape[1]])
 
 	layer = tf.matmul(x, W) + b
-	layer = tf.nn.relu(layer)
+	layer = tf.nn.softmax(layer)
 
 	return layer
 
@@ -167,7 +167,6 @@ def convolutional_neural_network(x):
 
 	fc = tf.reshape(conv2, [-1, conv2_shape * 3 * 32])  # conv2.shape
 	fc = create_fc_layer(fc, [conv2_shape * 3 * 32, 512])  # conv2.shape, num of neurons in the fc layer
-	fc = tf.nn.dropout(fc, dropout)
 
 	output = create_fc_layer(fc, [512, n_classes])	#num of neurons in the fc layer, n_classes
 
@@ -210,7 +209,7 @@ def model_training():
 	output = convolutional_neural_network(x)
 
 	loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output, labels=y))
-	train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
+	train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
 	correctness = tf.equal(tf.argmax(output, -1), tf.argmax(y, -1))
 	accuracy = tf.reduce_mean(tf.cast(correctness, 'float'))
@@ -233,7 +232,8 @@ def model_training():
 		all = [0] * n_classes
 
 		for i in range(n_batches):
-			print("\tComputing batch {} of {}".format(i, n_batches))
+			if i % 10 == 0:
+				print("\tComputing batch {} of {}".format(i, n_batches))
 			batch_x, batch_y = getBatch(train_x, train_y, batch_size, i)
 			# _, loss_value, acc = sess.run([train_step, loss, accuracy],
 			# 							  feed_dict={x: batch_x, y: batch_y})
