@@ -29,8 +29,8 @@ GENRE_TO_CLASSES = {
 
 
 def manage_dataset(dataset):
-	''' Function that divide the dataset into inputs and targets with the right shape,
-		it also shuffle the data '''
+	''' Function that divides the dataset into inputs and targets with the right shape,
+		it also shuffles the data '''
 	x = np.array([x[0] for x in dataset])
 	y = np.array([[y[1] for y in dataset]])
 	y = y.reshape([-1, 1])
@@ -58,7 +58,7 @@ train_x, train_y = manage_dataset(database)
 # hyperparameters
 learning_rate = 0.001
 epochs = 50
-batch_size = 512
+batch_size = 64
 n_batches = len(database) // batch_size
 print("Number of batches for each epoch:", n_batches)
 
@@ -88,7 +88,7 @@ keep_prob = tf.placeholder(tf.float32)
 
 
 def getBatch(x, y, batch_size, iteration):
-	''' Function that return the next bach of data to be computed '''
+	''' Function that returns the next bach of data to be computed '''
 	start_b = (iteration * batch_size) % len(x)
 	end_b = ((iteration * batch_size) + batch_size) % len(x)
 
@@ -116,7 +116,7 @@ def one_hot_encoder(y):
 
 
 def create_layer(input, n_size, activation=None):
-	''' Function that return a layer of neurons with the given size and activation'''
+	''' Function that returns a layer of neurons with the given size and activation'''
 	# create weights and biases
 	size_input = input.get_shape().as_list()[-1]
 	W = tf.Variable(tf.truncated_normal(shape=[size_input, n_size], stddev=0.1))
@@ -205,7 +205,7 @@ def model_training():
 		tot_loss.append(avg_loss)
 		tot_acc.append(avg_acc)
 		print("---------")
-		print("Epoch: {}\n  AVG Loss: {:.5f}\n  AVG acc: {:.5f}".format(epoch+1, avg_loss, avg_acc))
+		print("Epoch: {}\n  AVG loss: {:.5f}\n  AVG acc: {:.5f}".format(epoch+1, avg_loss, avg_acc))
 
 	print("FINISHED!")
 	print()

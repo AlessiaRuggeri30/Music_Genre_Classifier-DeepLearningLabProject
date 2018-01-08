@@ -1,3 +1,9 @@
+''' Script that parses all the json files, takes just those that
+	are included in genre_id.txt and, for each of them, creates
+	a new json file containing only metadata, MFCCs and music genre.
+	The new json files are saved in the corresponding folder
+	based on music genre'''
+
 import os
 import json
 from pprint import pprint

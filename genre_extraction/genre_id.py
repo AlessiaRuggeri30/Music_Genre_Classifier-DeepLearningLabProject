@@ -1,3 +1,5 @@
+''' Script that created genre_id.txt from msd_genre_dataset.txt '''
+
 from pprint import pprint
 
 TRACK_FILE = "msd_genre_dataset.txt"

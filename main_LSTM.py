@@ -27,8 +27,8 @@ GENRE_TO_CLASSES = {
 
 
 def manage_dataset(dataset):
-	''' Function that divide the dataset into inputs and targets with the right shape,
-		it also shuffle the data '''
+	''' Function that divides the dataset into inputs and targets with the right shape,
+		it also shuffles the data '''
 	x = np.array([x[0] for x in dataset])
 	y = np.array([[y[1] for y in dataset]])
 	y = y.reshape([-1, 1])
@@ -79,7 +79,7 @@ keep_prob = tf.placeholder(tf.float32)
 
 
 def getBatch(x, y, batch_size, iteration):
-	''' Function that return the next bach of data to be computed '''
+	''' Function that returns the next bach of data to be computed '''
 	start_b = (iteration * batch_size) % len(x)
 	end_b = ((iteration * batch_size) + batch_size) % len(x)
 
@@ -107,13 +107,13 @@ def one_hot_encoder(y):
 
 
 def weight_variable(shape):
-	''' Function that return random weights of given shape '''
+	''' Function that returns random weights of given shape '''
 	initial = tf.truncated_normal(shape, stddev=0.1)
 	return tf.Variable(initial)
 
 
 def bias_variable(shape):
-	''' Function that return random biases of given shape '''
+	''' Function that returns random biases of given shape '''
 	initial = tf.constant(0.1, shape=shape)
 	return tf.Variable(initial)
 
@@ -132,7 +132,7 @@ def create_LSTM_layers(input, rnn_shape, dropout):
 
 
 def create_fc_layer(x, layer_dim):
-	''' Function that return a feed-forward layer of activated neurons
+	''' Function that returns a feed-forward layer of activated neurons
 		with the given size'''
 	size_input = x.get_shape().as_list()[-1]
 	W = weight_variable([size_input, layer_dim])
@@ -240,7 +240,7 @@ def model_training():
 		avg_acc = avg_acc / n_batches
 		tot_loss.append(avg_loss)
 		tot_acc.append(avg_acc)
-		print("----- Epoch: {}\n  AVG Loss: {:.5f}\n  AVG acc: {:.5f}".format(epoch, avg_loss, avg_acc))
+		print("----- Epoch: {}\n  AVG loss: {:.5f}\n  AVG acc: {:.5f}".format(epoch, avg_loss, avg_acc))
 		if batch_size == 1:
 			for i in range(n_classes):
 				genres_acc.append(right[i] / all[i] if all[i] != 0 else 0)

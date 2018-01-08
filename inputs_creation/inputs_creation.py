@@ -1,5 +1,3 @@
-''' CONVOLUTIONAL NEURAL NETWORK'''
-
 import json
 import glob
 import numpy as np
