@@ -295,9 +295,9 @@ def model_training(train_x, train_y, restore_model=False):
 												   feed_dict={x: val_x, y: val_y})
 						print("\tloss: ", loss_value)
 						print("\tacc: ", acc)
-						print("\t---------")
 						print("\tloss validation: ", loss_val)
 						print("\tacc validation: ", acc_val)
+						print("\t---------")
 
 						f.write("\tComputing batch {} of {}\n".format(i, n_batches))
 						f.write("\tloss: {}\n".format(loss_value))
