@@ -1,6 +1,5 @@
 ''' FEED-FORWARD NEURAL NETWORK'''
 
-
 import numpy as np
 import matplotlib.pyplot as plt
 import math
@@ -50,15 +49,17 @@ print("---------- Loading data... ----------")
 # dataset = validationset = np.load("./data/dataset/validationset_array.npy")
 # dataset = testset = np.load("./data/dataset/testset_array.npy")
 database = trainingset = np.load("./data/dataset4c_np/trainingset_np.npy")
+testset = np.load("./data/dataset4c_np/testset_np.npy")
 
 train_x, train_y = manage_dataset(database)
+test_x, test_y = manage_dataset(testset)
 
 
 ''' Parameters '''
 # hyperparameters
 learning_rate = 0.001
-epochs = 50
-batch_size = 64
+epochs = 1000
+batch_size = 32
 n_batches = len(database) // batch_size
 print("Number of batches for each epoch:", n_batches)
 
@@ -66,25 +67,16 @@ print("Number of batches for each epoch:", n_batches)
 n_samples = trainingset.shape[0]
 n_input = 36  # input size
 n_classes = 4
-layers_dim = np.array([64, 128, 128, n_classes])
+layers_dim = np.array([32, 128, 256, 64, n_classes])
 n_layers = len(layers_dim)
 dropout = 0.80
 
 
 ''' Variables '''
-# neural network variables
 x = tf.placeholder(tf.float32, [None, n_input], name='x')
 y = tf.placeholder(tf.int64, [None, n_classes], name='y')
-# y = tf.one_hot(y, depth=n_classes, name='y_hot')
 
 keep_prob = tf.placeholder(tf.float32)
-
-# dataset variables
-# dataset_x = tf.placeholder(tf.float32, [None, n_input])
-# dataset_y = tf.placeholder(tf.int64, [None, n_classes])
-#
-# dataset = tf.data.Dataset().from_tensor_slices((x, y)).batch(batch_size).repeat()
-# iterator = dataset.make_initializable_iterator()
 
 
 def getBatch(x, y, batch_size, iteration):
@@ -169,7 +161,21 @@ def plot_results(title, tot_loss, tot_acc, y_lim=True):
 	plt.show()
 
 
-def model_training():
+def reverse_dic(ind):
+	genre = list(GENRE_TO_CLASSES.keys())[list(GENRE_TO_CLASSES.values()).index(ind)]
+	return genre
+
+
+def class_accuracy(out, batch_y, right_out, all_out):
+	for i in range(batch_size):
+		out_i = np.argmax(out[i])
+		target_i = np.argmax(batch_y[i])
+		if out_i == target_i:
+			right_out[target_i] += 1
+		all_out[target_i] += 1
+
+
+def model_training(restore_model=False):
 	''' Function that performs the training of the neural network '''
 	output, output_nonactived = fc_neural_network(x)
 
@@ -183,44 +189,71 @@ def model_training():
 	sess = tf.InteractiveSession()
 	sess.run(tf.global_variables_initializer())
 	saver = tf.train.Saver()
-	# sess.run(tf.one_hot(y, depth=n_classes), feed_dict={y: train_y})
-	# sess.run(iterator.initializer, feed_dict={x: train_x, 'y:0': train_y})
 
 	tot_loss = []
 	tot_acc = []
 
-	for epoch in range(epochs):
-		avg_loss = 0
-		avg_acc = 0
+	if (restore_model):
+		print("---------- Restoring model... ----------")
+		saver.restore(sess, "models/fc_model/fc_model.ckpt")
 
-		for i in range(n_batches):
-			batch_x, batch_y = getBatch(train_x, train_y, batch_size, i)
-			# batch_x, batch_y = sess.run(iterator.get_next())
-			_, loss_value, acc = sess.run([train_step, loss, accuracy], feed_dict={x: batch_x, y: batch_y})
-			avg_loss += loss_value
-			avg_acc += acc
+		print("---------- Computing outputs... ----------")
+		loss = loss.eval(feed_dict={x: test_x, y: test_y})
+		acc = accuracy.eval(feed_dict={x: test_x, y: test_y})
+		print()
+		print("----- Results:\n  Loss: {:.5f}\n  Acc: {:.5f}".format(loss, acc))
 
-		avg_loss = avg_loss / n_batches
-		avg_acc = avg_acc / n_batches
-		tot_loss.append(avg_loss)
-		tot_acc.append(avg_acc)
-		print("---------")
-		print("Epoch: {}\n  AVG loss: {:.5f}\n  AVG acc: {:.5f}".format(epoch+1, avg_loss, avg_acc))
+		print("FINISHED!")
 
-	print("FINISHED!")
-	print()
-	print("---------- Saving model... ----------")
-	save_path = saver.save(sess, "models/fc_model/fc_model.ckpt")
-	print("Model saved in file: %s" % save_path)
-	print()
-	print("---------- Plotting results... ----------")
-	plot_results("Feed-Forward Neural Network", tot_loss, tot_acc, y_lim=False)
+	else:
+		for epoch in range(epochs):
+			genres_acc = []
+			avg_loss = 0
+			avg_acc = 0
+			right_out = [0] * n_classes
+			all_out = [0] * n_classes
+
+			for i in range(n_batches):
+				batch_x, batch_y = getBatch(train_x, train_y, batch_size, i)
+
+				out, _, loss_value, acc = sess.run([output, train_step, loss, accuracy],
+												   feed_dict={x: batch_x, y: batch_y})
+
+				class_accuracy(out, batch_y, right_out, all_out)
+
+				avg_loss += loss_value
+				avg_acc += acc
+
+			avg_loss = avg_loss / n_batches
+			avg_acc = avg_acc / n_batches
+			tot_loss.append(avg_loss)
+			tot_acc.append(avg_acc)
+
+			if epoch % 50 == 0 or epoch == epochs-1:
+				print("---------")
+				print("Epoch: {}\n  AVG loss: {:.5f}\n  AVG acc: {:.5f}".format(epoch, avg_loss, avg_acc))
+
+				for i in range(n_classes):
+					genres_acc.append(right_out[i] / all_out[i] if all_out[i] != 0 else 0)
+				for i in range(n_classes):
+					print("   ", reverse_dic(i), ": {:.4f}".format(genres_acc[i]))
+				print()
+
+		print("---------- Computing test outputs... ----------")
+		loss_test, acc_test = sess.run([loss, accuracy], feed_dict={x: test_x, y: test_y})
+		print("----- Test results:\n  Loss: {:.5f}\n  Acc: {:.5f}".format(loss_test, acc_test))
+		print()
+		print("FINISHED!")
+		print()
+		print("---------- Saving model... ----------")
+		save_path = saver.save(sess, "models/fc_model/fc_model.ckpt")
+		print("Model saved in file: %s" % save_path)
+		print()
+		print("---------- Plotting results... ----------")
+		plot_results("Feed-Forward Neural Network", tot_loss, tot_acc, y_lim=False)
 
 
 tf.set_random_seed(0)
 train_y = one_hot_encoder(train_y)
-model_training()
-
-'''Just after sess.run(tf.global_variables_initializer())'''
-# saver.restore(sess, "models/fc_model/fc_model.ckpt")
-# print("Model restored.")
+test_y = one_hot_encoder(test_y)
+model_training(restore_model=False)

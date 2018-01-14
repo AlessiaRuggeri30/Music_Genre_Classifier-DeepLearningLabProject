@@ -138,9 +138,9 @@ def bias_variable(shape):
 
 
 def create_conv_layer(x, n_channel, filter_size, n_filters):
-	""" Function that returns a convolutional layer of neurons
+	''' Function that returns a convolutional layer of neurons
 		with the given number of filters, having the given shape
-		and number of channels """
+		and number of channels '''
 	shape = [filter_size[0], filter_size[1], n_channel, n_filters]
 
 	W = weight_variable(shape)
@@ -173,7 +173,6 @@ def convolutional_neural_network(x):
 	conv2 = create_conv_layer(conv1, 16, (128, 4), 32)
 	# print(conv2.shape)
 	conv2_shape = int(conv2.shape[1])
-
 
 	fc = tf.reshape(conv2, [-1, conv2_shape * 3 * 32])  # conv2.shape
 	fc = create_fc_layer(fc, [conv2_shape * 3 * 32, 512])  # conv2.shape, num of neurons in the fc layer
@@ -275,10 +274,10 @@ def model_training(train_x, train_y, restore_model=False):
 				genres_acc = []
 				avg_loss = 0
 				avg_acc = 0
+				avg_loss_val = 0
+				avg_acc_val = 0
 				right_out = [0] * n_classes
 				all_out = [0] * n_classes
-
-				# train_x, train_y = shuffle_data(train_x, train_y)
 
 				for i in range(n_batches):
 					if i % 5 == 0:
@@ -290,9 +289,10 @@ def model_training(train_x, train_y, restore_model=False):
 
 					class_accuracy(out, batch_y, right_out, all_out)
 
+					loss_val, acc_val = sess.run([loss, accuracy],
+												 feed_dict={x: val_x, y: val_y})
+
 					if i % 5 == 0:
-						loss_val, acc_val = sess.run([loss, accuracy],
-												   feed_dict={x: val_x, y: val_y})
 						print("\tloss: ", loss_value)
 						print("\tacc: ", acc)
 						print("\tloss validation: ", loss_val)
@@ -308,20 +308,31 @@ def model_training(train_x, train_y, restore_model=False):
 
 					avg_loss += loss_value
 					avg_acc += acc
+					avg_loss_val += loss_val
+					avg_acc_val += acc_val
 
 				avg_loss = avg_loss / n_batches
 				avg_acc = avg_acc / n_batches
 				tot_loss.append(avg_loss)
 				tot_acc.append(avg_acc)
 
+				avg_loss_val = avg_loss_val / n_batches
+				avg_acc_val = avg_acc_val / n_batches
+
 				print("----- Epoch: {}\n  AVG loss: {:.5f}\n  AVG acc: {:.5f}".format(epoch, avg_loss, avg_acc))
-				f.write("\t----- Epoch: {}\n  AVG loss: {:.5f}\n  AVG acc: {:.5f}\n".format(epoch, avg_loss, avg_acc))
+				f.write("----- Epoch: {}\n  AVG loss: {:.5f}\n  AVG acc: {:.5f}\n".format(epoch, avg_loss, avg_acc))
 
 				for i in range(n_classes):
 					genres_acc.append(right_out[i] / all_out[i] if all_out[i] != 0 else 0)
 				for i in range(n_classes):
 					print("   ", reverse_dic(i), ": {:.4f}".format(genres_acc[i]))
+					f.write("   {}: {:.4f}\n".format(reverse_dic(i), genres_acc[i]))
+
+				print("  AVG loss validation: {:.5f}\n  AVG acc validation: {:.5f}".format(epoch, avg_loss_val, avg_acc_val))
+				f.write("  AVG loss validation: {:.5f}\n  AVG acc validation: {:.5f}\n".format(epoch, avg_loss_val,
+																							avg_acc_val))
 				print()
+				f.write("\n")
 
 			print("---------- Computing test outputs... ----------")
 			loss_test, acc_test = sess.run([loss, accuracy], feed_dict={x: test_x, y: test_y})
@@ -338,7 +349,7 @@ def model_training(train_x, train_y, restore_model=False):
 			plot_results("Convolutional Neural Network", tot_loss, tot_acc, y_lim=False)
 
 			f.write("\n")
-			f.write("---------- Computing test outputs... ----------")
+			f.write("---------- Computing test outputs... ----------\n")
 			f.write("----- Test results:\n  Loss: {:.5f}\n  Acc: {:.5f}".format(loss_test, acc_test))
 			f.write("\n")
 			f.write("FINISHED!")

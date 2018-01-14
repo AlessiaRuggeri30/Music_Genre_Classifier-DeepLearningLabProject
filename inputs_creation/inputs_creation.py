@@ -1,3 +1,7 @@
+''' This script includes some functions to shape data, divide them
+	into train set, validation set and test set, and store them
+	as numpy array files. '''
+
 import json
 import glob
 import numpy as np
@@ -43,6 +47,7 @@ statistics = False		# if true: mean, standard deviation and delta are computed
 
 
 def MFCCs_manager(MFCCs):
+	''' Function that computes statistics '''
 	m = np.mean(MFCCs, axis=0)
 	sd = np.std(MFCCs, axis=0)
 	d = np.ptp(MFCCs, axis=0)
@@ -50,6 +55,7 @@ def MFCCs_manager(MFCCs):
 
 
 def input_creator(MFCCs, label):
+	''' Function that create a unique list containing all the statistics '''
 	m, sd, d = MFCCs_manager(MFCCs)
 	values = np.append(m, [sd, d])
 	sample = [values, label]

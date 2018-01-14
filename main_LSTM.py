@@ -1,3 +1,5 @@
+''' RECURRENT NEURAL NETWORK WITH LSTM'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 import math
@@ -48,11 +50,12 @@ print("---------- Loading data... ----------")
 # dataset = validationset = np.load("./data/dataset/validationset_array.npy")
 # dataset = testset = np.load("./data/dataset/testset_array.npy")
 database = trainingset = np.load("./data/subset4c_np/trainingset_np.npy")
+# testset = np.load("./data/subset4c_np/testset_np.npy")
 
 train_x, train_y = manage_dataset(database)
+# test_x, test_y = manage_dataset(testset)
 
 '''Parameters'''
-
 # hyperparameters
 learning_rate = 0.001
 epochs = 10
@@ -72,8 +75,8 @@ dropout = 0.8
 print("Number of segments for each song:", n_seg)
 
 ''' Variables '''
-x = tf.placeholder(tf.float32, [None, n_seg, n_coef])
-y = tf.placeholder(tf.int64, [None, n_classes])
+x = tf.placeholder(tf.float32, [None, n_seg, n_coef], name='x')
+y = tf.placeholder(tf.int64, [None, n_classes], name='y')
 
 keep_prob = tf.placeholder(tf.float32)
 
@@ -119,6 +122,8 @@ def bias_variable(shape):
 
 
 def create_LSTM_layers(input, rnn_shape, dropout):
+	''' Function that returns recurrent layers of LSTM neurons
+		having the given shape '''
 	cells = [tf.nn.rnn_cell.LSTMCell(size) for size in rnn_shape]
 	if (dropout != None):
 		cells = [rnn.DropoutWrapper(cell, input_keep_prob=dropout, output_keep_prob=dropout) for cell in cells]
@@ -144,6 +149,8 @@ def create_fc_layer(x, layer_dim):
 
 
 def recurrent_neural_network(x):
+	''' Function that uses create_LSTM_layers and create_fc_layer to generate
+		a recurrent neural network with LSTM '''
 	val = create_LSTM_layers(x, layers_dim, dropout)
 	output = create_fc_layer(val, fc_layer_dim)
 
@@ -184,7 +191,16 @@ def reverse_dic(ind):
 	return genre
 
 
-def model_training():
+def class_accuracy(out, batch_y, right_out, all_out):
+	for i in range(batch_size):
+		out_i = np.argmax(out[i])
+		target_i = np.argmax(batch_y[i])
+		if out_i == target_i:
+			right_out[target_i] += 1
+		all_out[target_i] += 1
+
+
+def model_training(restore_model=False):
 	''' Function that performs the training of the neural network '''
 	output, output_nonactivated = recurrent_neural_network(x)
 
@@ -202,63 +218,71 @@ def model_training():
 	tot_loss = []
 	tot_acc = []
 
-	for epoch in range(epochs):
-		print("---------")
-		print("Computing epoch {} of {}".format(epoch, epochs))
-		genres_acc = []
-		avg_loss = 0
-		avg_acc = 0
-		right = [0] * n_classes
-		all = [0] * n_classes
+	if (restore_model):
+		# print("---------- Restoring model... ----------")
+		# saver.restore(sess, "models/lstm_model/lstm_model.ckpt")
+		#
+		# print("---------- Computing outputs... ----------")
+		# loss = loss.eval(feed_dict={x: test_x, y: test_y})
+		# acc = accuracy.eval(feed_dict={x: test_x, y: test_y})
+		# print()
+		# print("----- Results:\n  Loss: {:.5f}\n  Acc: {:.5f}".format(loss, acc))
 
-		for i in range(n_batches):
-			print("\tComputing batch {} of {}".format(i, n_batches))
-			batch_x, batch_y = getBatch(train_x, train_y, batch_size, i)
-			# _, loss_value, acc = sess.run([train_step, loss, accuracy],
-			# 							  feed_dict={x: batch_x, y: batch_y})
+		print("FINISHED!")
 
-			if batch_size == 1:
+	else:
+		for epoch in range(epochs):
+			print("---------")
+			print("Computing epoch {} of {}".format(epoch, epochs))
+			genres_acc = []
+			avg_loss = 0
+			avg_acc = 0
+			right_out = [0] * n_classes
+			all_out = [0] * n_classes
+
+			for i in range(n_batches):
+				print("\tComputing batch {} of {}".format(i, n_batches))
+				batch_x, batch_y = getBatch(train_x, train_y, batch_size, i)
+
 				out, _, loss_value, acc = sess.run([output, train_step, loss, accuracy],
 												   feed_dict={x: batch_x, y: batch_y})
-				out = np.argmax(out)
-				target = np.argmax(batch_y)
-				if out == target:
-					right[target] += 1
-				all[target] += 1
 
-			else:
-				_, loss_value, acc = sess.run([train_step, loss, accuracy],
-											  feed_dict={x: batch_x, y: batch_y})
+				class_accuracy(out, batch_y, right_out, all_out)
 
-			if i % 100 == 0:
-				print("\tloss: ", loss_value)
-				# print("\tacc: ", acc)
-			avg_loss += loss_value
-			avg_acc += acc
+				if i % 100 == 0:
+					print("\tloss: ", loss_value)
+					# print("\tacc: ", acc)
+				avg_loss += loss_value
+				avg_acc += acc
 
-		avg_loss = avg_loss / n_batches
-		avg_acc = avg_acc / n_batches
-		tot_loss.append(avg_loss)
-		tot_acc.append(avg_acc)
-		print("----- Epoch: {}\n  AVG loss: {:.5f}\n  AVG acc: {:.5f}".format(epoch, avg_loss, avg_acc))
-		if batch_size == 1:
+			avg_loss = avg_loss / n_batches
+			avg_acc = avg_acc / n_batches
+			tot_loss.append(avg_loss)
+			tot_acc.append(avg_acc)
+			print("----- Epoch: {}\n  AVG loss: {:.5f}\n  AVG acc: {:.5f}".format(epoch, avg_loss, avg_acc))
+
 			for i in range(n_classes):
-				genres_acc.append(right[i] / all[i] if all[i] != 0 else 0)
+				genres_acc.append(right_out[i] / all_out[i] if all_out[i] != 0 else 0)
 			for i in range(n_classes):
 				print("   ", reverse_dic(i), ": {:.4f}".format(genres_acc[i]))
-		print()
+			print()
 
-	print("FINISHED!")
-	print()
-	print("---------- Saving model... ----------")
-	save_path = saver.save(sess, "models/lstm_model/lstm_model.ckpt")
-	print("Model saved in file: %s" % save_path)
-	print()
-	print("---------- Plotting results... ----------")
-	plot_results("Recurrent Neural Network", tot_loss, tot_acc)
-	plot_results("Recurrent Neural Network", tot_loss, tot_acc, y_lim=False)
+		# print("---------- Computing test outputs... ----------")
+		# loss_test, acc_test = sess.run([loss, accuracy], feed_dict={x: test_x, y: test_y})
+		# print("----- Test results:\n  Loss: {:.5f}\n  Acc: {:.5f}".format(loss_test, acc_test))
+		# print()
+		print("FINISHED!")
+		print()
+		print("---------- Saving model... ----------")
+		save_path = saver.save(sess, "models/lstm_model2/lstm_model2.ckpt")
+		print("Model saved in file: %s" % save_path)
+		print()
+		print("---------- Plotting results... ----------")
+		plot_results("Recurrent Neural Network", tot_loss, tot_acc)
+		plot_results("Recurrent Neural Network", tot_loss, tot_acc, y_lim=False)
 
 
 tf.set_random_seed(0)
 train_y = one_hot_encoder(train_y)
-model_training()
+# test_y = one_hot_encoder(test_y)
+model_training(restore_model=False)
