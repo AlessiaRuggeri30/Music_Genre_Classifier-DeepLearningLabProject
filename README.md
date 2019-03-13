@@ -1,6 +1,8 @@
 ## Music Genre Classifier - Deep Learning Lab Project
 
-**WORK IN PROGRESS**
+**WARNING**
+
+This project has been implemented during my first months at USI, while I was still learning basic knowledge about deep learning; therefore the data analysis and the DL models could be better build with my current knowledge and, for this reason, I'm planning on working again on this project for my personal interest in the near future to improve the quality of the work and the results.
 
 *Group members: Alessia Ruggeri, Thomas Tiotto*
 
