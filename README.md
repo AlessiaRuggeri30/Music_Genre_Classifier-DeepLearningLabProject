@@ -1,10 +1,10 @@
-## Music Genre Classificator - Deep Learning Lab Project
+## Music Genre Classifier - Deep Learning Lab Project
 
 **WORK IN PROGRESS**
 
 *Group members: Alessia Ruggeri, Thomas Tiotto*
 
-*Abstract: Music Genre Classificator using audio features and neural networks*
+*Abstract: Music Genre Classifier using audio features and neural networks*
 
 The aim of the project is to implement a music genre classifier using neural networks. The classifier will receive as input a song’s audio signal and as output will return its music genre.
 
